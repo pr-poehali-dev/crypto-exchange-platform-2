@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
+import { useState, useEffect } from 'react';
 
 interface CryptoRate {
   symbol: string;
@@ -10,16 +11,77 @@ interface CryptoRate {
   marketCap: string;
 }
 
-const cryptoRates: CryptoRate[] = [
-  { symbol: 'BTC', name: 'Bitcoin', price: 94250.50, change24h: 2.4, icon: '₿', marketCap: '$1.85T' },
-  { symbol: 'ETH', name: 'Ethereum', price: 3420.75, change24h: -1.2, icon: 'Ξ', marketCap: '$411B' },
-  { symbol: 'USDT', name: 'Tether', price: 1.00, change24h: 0.01, icon: '₮', marketCap: '$97B' },
-  { symbol: 'BNB', name: 'BNB', price: 612.30, change24h: 3.1, icon: 'BNB', marketCap: '$89B' },
-  { symbol: 'SOL', name: 'Solana', price: 189.45, change24h: 5.7, icon: 'SOL', marketCap: '$86B' },
-  { symbol: 'XRP', name: 'Ripple', price: 0.62, change24h: -0.8, icon: 'XRP', marketCap: '$35B' },
-];
+const CRYPTO_ICONS: Record<string, string> = {
+  'BTC': '₿',
+  'ETH': 'Ξ',
+  'USDT': '₮',
+  'BNB': 'BNB',
+  'SOL': 'SOL',
+  'XRP': 'XRP'
+};
+
+const CRYPTO_NAMES: Record<string, string> = {
+  'BTC': 'Bitcoin',
+  'ETH': 'Ethereum',
+  'USDT': 'Tether',
+  'BNB': 'BNB',
+  'SOL': 'Solana',
+  'XRP': 'Ripple'
+};
+
+const API_URL = 'https://functions.poehali.dev/07068487-ac7b-4b88-bdf2-45590efaca18';
+
+const formatMarketCap = (value: number): string => {
+  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (value >= 1e9) return `$${(value / 1e9).toFixed(0)}B`;
+  if (value >= 1e6) return `$${(value / 1e6).toFixed(0)}M`;
+  return `$${value.toFixed(0)}`;
+};
 
 export default function CryptoRates() {
+  const [cryptoRates, setCryptoRates] = useState<CryptoRate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRates();
+    const interval = setInterval(fetchRates, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchRates = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      
+      const formattedRates: CryptoRate[] = data.rates
+        .filter((rate: any) => rate.symbol !== 'RUB')
+        .map((rate: any) => ({
+          symbol: rate.symbol,
+          name: CRYPTO_NAMES[rate.symbol] || rate.symbol,
+          price: rate.price,
+          change24h: rate.change24h,
+          icon: CRYPTO_ICONS[rate.symbol] || rate.symbol,
+          marketCap: formatMarketCap(rate.marketCap)
+        }));
+      
+      setCryptoRates(formattedRates);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch rates:', error);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="py-20">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="text-muted-foreground">Загрузка курсов...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-20">
       <div className="max-w-7xl mx-auto px-4">

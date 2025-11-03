@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import ExchangeCalculator from '@/components/ExchangeCalculator';
 import CryptoRates from '@/components/CryptoRates';
+import CryptoChart from '@/components/CryptoChart';
 import Reviews from '@/components/Reviews';
 import Contacts from '@/components/Contacts';
 
@@ -164,6 +165,10 @@ export default function Index() {
 
       <section id="rates">
         <CryptoRates />
+      </section>
+
+      <section id="chart">
+        <CryptoChart />
       </section>
 
       <section id="reviews">
